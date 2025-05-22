@@ -1,172 +1,156 @@
-import tkinter as tk
-from tkinter import ttk
-from PIL import Image, ImageTk
+import flet as ft
 
-# --- UI CONFIGURATION ---
-BG_LIGHT = 'white'
-BG_DARK = '#1e1e1e'
-TEXT_LIGHT = 'black'
-TEXT_DARK = 'white'
-MENU_BG = '#F8F8F8'
+def main(page: ft.Page):
+    current_language = "English"
+    text_size = 16
+    selected_index = 0
 
-current_theme = 'light'
-text_size = 12
+    translations = {
+        "English": {
+            "Language": "Language",
+            "Dark Mode": "Dark Mode",
+            "Text Size": "Text Size",
+            "Settings": "Settings",
+            "Users": "Users",
+            "Sensors": "Sensors",
+            "Data": "Data"
+        },
+        "Русский": {
+            "Language": "Язык",
+            "Dark Mode": "Тёмная тема",
+            "Text Size": "Размер текста",
+            "Settings": "Настройки",
+            "Users": "Пользователи",
+            "Sensors": "Сенсоры",
+            "Data": "Данные"
+        },
+        "Deutsch": {
+            "Language": "Sprache",
+            "Dark Mode": "Dunkles Thema",
+            "Text Size": "Textgröße",
+            "Settings": "Einstellungen",
+            "Users": "Benutzer",
+            "Sensors": "Sensoren",
+            "Data": "Daten"
+        }
+    }
 
-image_refs = []
+    def get_text_color():
+        return ft.Colors.BLACK if page.theme_mode == ft.ThemeMode.LIGHT else ft.Colors.WHITE
 
-# --- COLORIZE ICON FUNCTION ---
-def colorize_icon(image_path, color_hex, size):
-    img = Image.open(image_path).convert("RGBA").resize(size, Image.LANCZOS)
-    r, g, b, a = img.split()
-    color_img = Image.new("RGBA", img.size, color_hex)
-    colored_icon = Image.composite(color_img, Image.new("RGBA", img.size), a)
-    return colored_icon
+    def get_bg_color():
+        return ft.Colors.GREY_200 if page.theme_mode == ft.ThemeMode.LIGHT else ft.Colors.GREY_800
 
-# --- THEME APPLY FUNCTION ---
-def apply_theme(theme):
-    global current_theme
-    bg = BG_LIGHT if theme == 'light' else BG_DARK
-    fg = TEXT_LIGHT if theme == 'light' else TEXT_DARK
+    label_language = ft.Text(translations[current_language]["Language"], size=text_size, color=get_text_color())
+    label_dark_mode = ft.Text(translations[current_language]["Dark Mode"], size=text_size, color=get_text_color())
+    label_text_size = ft.Text(translations[current_language]["Text Size"], size=text_size, color=get_text_color())
 
-    root.configure(bg=bg)
-    settings_frame.configure(bg=bg)
+    lang_dropdown = ft.Dropdown(
+        options=[
+            ft.dropdown.Option("English"),
+            ft.dropdown.Option("Русский"),
+            ft.dropdown.Option("Deutsch"),
+        ],
+        value="English",
+        width=160,
+        on_change=lambda e: change_language(e.control.value),
+    )
 
-    for frame in settings_frame.winfo_children():
-        if isinstance(frame, tk.Frame):
-            frame.configure(bg=bg)
-        for widget in frame.winfo_children():
-            if isinstance(widget, tk.Label):
-                widget.configure(bg=bg, fg=fg)
-            elif isinstance(widget, tk.Button):
-                widget.configure(bg=bg, fg=fg)
-            elif isinstance(widget, tk.Frame):
-                widget.configure(bg=bg)
+    theme_switch = ft.Switch(
+        label="",
+        on_change=lambda e: toggle_theme(),
+        value=False,
+    )
 
-    # Apply styles to ttk widgets
-    style.configure("TCombobox",
-                    fieldbackground=bg,
-                    background=bg,
-                    foreground=fg)
-    style.configure("TCheckbutton",
-                    background=bg,
-                    foreground=fg)
-
-    current_theme = theme
-    theme_var.set(theme == 'dark')
-
-# --- THEME TOGGLE ---
-def toggle_theme():
-    if current_theme == 'light':
-        apply_theme('dark')
-    else:
-        apply_theme('light')
-
-# --- TEXT SIZE CONTROL ---
-def increase_text():
-    global text_size
-    text_size += 1
-    update_fonts()
-
-def decrease_text():
-    global text_size
-    text_size = max(8, text_size - 1)
-    update_fonts()
-
-def update_fonts():
-    for frame in settings_frame.winfo_children():
-        for widget in frame.winfo_children():
-            if isinstance(widget, tk.Label):
-                widget.configure(font=('Helvetica', text_size))
-
-# --- UI SETUP ---
-root = tk.Tk()
-root.title("Settings")
-root.geometry("400x600")
-root.configure(bg=BG_LIGHT)
-
-style = ttk.Style(root)
-style.theme_use('default')
-
-# Main content frame
-settings_frame = tk.Frame(root, bg=BG_LIGHT)
-settings_frame.pack(fill='both', expand=True, pady=20, padx=20)
-
-# --- Setting Row Function ---
-def add_setting_row(parent, label_text, widget):
-    row = tk.Frame(parent, bg=parent['bg'])
-    row.pack(fill='x', pady=10)
-
-    label = tk.Label(row, text=label_text, font=('Helvetica', text_size), bg=parent['bg'], fg=TEXT_LIGHT, anchor='w')
-    label.pack(side='left', fill='x', expand=True)
-
-    widget.pack(side='right')
-
-    return row
-
-# --- Widgets ---
-lang_selector = ttk.Combobox(settings_frame, values=["English", "Русский", "Deutsch"], state="readonly", width=15)
-lang_selector.set("English")
-add_setting_row(settings_frame, "Language", lang_selector)
-
-theme_var = tk.BooleanVar(value=False)
-theme_switch = ttk.Checkbutton(settings_frame, variable=theme_var, command=toggle_theme, style='Switch.TCheckbutton')
-add_setting_row(settings_frame, "Dark Mode", theme_switch)
-
-text_size_frame = tk.Frame(settings_frame, bg=BG_LIGHT)
-btn_increase = tk.Button(text_size_frame, text="+", command=increase_text, width=3)
-btn_decrease = tk.Button(text_size_frame, text="-", command=decrease_text, width=3)
-btn_increase.pack(side='left', padx=5)
-btn_decrease.pack(side='left')
-add_setting_row(settings_frame, "Text Size", text_size_frame)
-
-# --- Bottom Menu ---
-bottom_menu = tk.Frame(root, bg=MENU_BG)
-bottom_menu.pack(side='bottom', fill='x')
-
-def add_menu_button(frame, text, icon_path):
-    btn_frame = tk.Frame(frame, bg=MENU_BG)
-    btn_frame.pack(side='left', fill='both', expand=True)
-
-    if text == "Settings":
-        icon_color = "#007AFF"
-        text_color = "#007AFF"
-    else:
-        icon_color = "#A0A0A0"
-        text_color = "#A0A0A0"
-
-    img = colorize_icon(icon_path, icon_color, (24, 24))
-    img_tk = ImageTk.PhotoImage(img)
-    image_refs.append(img_tk)
-
-    icon_label = tk.Label(btn_frame, image=img_tk, bg=MENU_BG)
-    icon_label.pack()
-
-    text_label = tk.Label(btn_frame, text=text, font=('Helvetica', 10), fg=text_color, bg=MENU_BG)
-    text_label.pack()
-
-menu_items = [
-    ("Data", "icons/sens/data.png"),
-    ("Sensors", "icons/sens/sensors.png"),
-    ("Users", "icons/sens/users.png"),
-    ("Settings", "icons/sens/settings.png"),
-]
-
-for text, icon in menu_items:
-    add_menu_button(bottom_menu, text, icon)
-
-# --- Style for switch ---
-style.layout('Switch.TCheckbutton', [
-    ('Checkbutton.padding', {
-        'sticky': 'nswe',
-        'children': [
-            ('Checkbutton.indicator', {'side': 'left'}),
-            ('Checkbutton.label', {'sticky': ''})
+    def update_nav_bar():
+        nav_bar.destinations = [
+            ft.NavigationBarDestination(icon=ft.Icons.DATA_OBJECT, label=translations[current_language]["Data"]),
+            ft.NavigationBarDestination(icon=ft.Icons.SENSORS, label=translations[current_language]["Sensors"]),
+            ft.NavigationBarDestination(icon=ft.Icons.PEOPLE, label=translations[current_language]["Users"]),
+            ft.NavigationBarDestination(icon=ft.Icons.SETTINGS, label=translations[current_language]["Settings"])
         ]
-    })
-])
-style.configure('Switch.TCheckbutton', indicatorcolor='#007AFF', indicatorsize=40)
+        nav_bar.selected_index = selected_index
 
-# --- Apply Light Theme Initially ---
-apply_theme('light')
+    def change_language(selected):
+        nonlocal current_language
+        current_language = selected
+        update_texts()
 
-root.mainloop()
+    def toggle_theme():
+        page.theme_mode = ft.ThemeMode.DARK if page.theme_mode == ft.ThemeMode.LIGHT else ft.ThemeMode.LIGHT
+        update_texts()
+
+    def increase_text(e):
+        nonlocal text_size
+        text_size += 1
+        update_texts()
+
+    def decrease_text(e):
+        nonlocal text_size
+        text_size = max(8, text_size - 1)
+        update_texts()
+
+    def update_texts():
+        label_language.value = translations[current_language]["Language"]
+        label_dark_mode.value = translations[current_language]["Dark Mode"]
+        label_text_size.value = translations[current_language]["Text Size"]
+
+        label_language.size = text_size
+        label_dark_mode.size = text_size
+        label_text_size.size = text_size
+
+        label_language.color = get_text_color()
+        label_dark_mode.color = get_text_color()
+        label_text_size.color = get_text_color()
+
+        settings_panel.bgcolor = get_bg_color()
+        update_nav_bar()
+        page.update()
+
+    btn_increase = ft.ElevatedButton("+", on_click=increase_text)
+    btn_decrease = ft.ElevatedButton("-", on_click=decrease_text)
+
+    settings_panel = ft.Container(
+        content=ft.Column(
+            spacing=25,
+            controls=[
+                ft.Row([label_language, lang_dropdown], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Divider(thickness=1),
+                ft.Row([label_dark_mode, theme_switch], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Divider(thickness=1),
+                ft.Row([
+                    label_text_size,
+                    ft.Row([btn_decrease, btn_increase], spacing=10)
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ],
+        ),
+        padding=20,
+        border_radius=10,
+        bgcolor=get_bg_color(),
+    )
+
+    def on_nav_change(e):
+        nonlocal selected_index
+        selected_index = e.control.selected_index
+        page.snack_bar = ft.SnackBar(ft.Text(f"You selected: {translations[current_language]['Settings' if selected_index == 0 else 'Users' if selected_index == 1 else 'Sensors' if selected_index == 2 else 'Data']}"))
+        page.snack_bar.open = True
+        page.update()
+
+    nav_bar = ft.NavigationBar(
+        destinations=[],  # заполним позже
+        selected_index=selected_index,
+        on_change=on_nav_change,
+    )
+
+    update_nav_bar()
+
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.title = "Settings UI"
+    page.padding = 20
+    page.window_width = 420
+    page.window_height = 600
+
+    page.add(settings_panel)
+    page.add(nav_bar)
+
+ft.app(target=main)

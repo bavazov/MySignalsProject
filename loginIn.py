@@ -1,4 +1,5 @@
 import flet as ft
+import os
 
 VALID_USERNAME = "admin"
 VALID_PASSWORD = "password123"
@@ -38,7 +39,7 @@ def main(page: ft.Page):
 
     # Right image logo
     logo = ft.Image(
-        src="icons/menu/logo_mysignals.png",
+        src="assets/icons/menu/logo_mysignals.png",
         width=200,
         fit=ft.ImageFit.CONTAIN
     )

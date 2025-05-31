@@ -1,9 +1,9 @@
 import flet as ft
 
-def main(page: ft.Page):
+def settings_view(page: ft.Page, on_nav_change):
     current_language = "English"
     text_size = 16
-    selected_index = 0
+    selected_index = 3  # Settings tab
 
     translations = {
         "English": {
@@ -41,9 +41,9 @@ def main(page: ft.Page):
     def get_bg_color():
         return ft.Colors.GREY_200 if page.theme_mode == ft.ThemeMode.LIGHT else ft.Colors.GREY_800
 
-    label_language = ft.Text(translations[current_language]["Language"], size=text_size, color=get_text_color())
-    label_dark_mode = ft.Text(translations[current_language]["Dark Mode"], size=text_size, color=get_text_color())
-    label_text_size = ft.Text(translations[current_language]["Text Size"], size=text_size, color=get_text_color())
+    label_language = ft.Text("", size=text_size, color=get_text_color())
+    label_dark_mode = ft.Text("", size=text_size, color=get_text_color())
+    label_text_size = ft.Text("", size=text_size, color=get_text_color())
 
     lang_dropdown = ft.Dropdown(
         options=[
@@ -51,33 +51,23 @@ def main(page: ft.Page):
             ft.dropdown.Option("Русский"),
             ft.dropdown.Option("Deutsch"),
         ],
-        value="English",
+        value=current_language,
         width=160,
-        on_change=lambda e: change_language(e.control.value),
     )
 
-    theme_switch = ft.Switch(
-        label="",
-        on_change=lambda e: toggle_theme(),
-        value=False,
-    )
+    theme_switch = ft.Switch(value=page.theme_mode == ft.ThemeMode.DARK)
 
-    def update_nav_bar():
-        nav_bar.destinations = [
-            ft.NavigationBarDestination(icon=ft.Icons.DATA_OBJECT, label=translations[current_language]["Data"]),
-            ft.NavigationBarDestination(icon=ft.Icons.SENSORS, label=translations[current_language]["Sensors"]),
-            ft.NavigationBarDestination(icon=ft.Icons.PEOPLE, label=translations[current_language]["Users"]),
-            ft.NavigationBarDestination(icon=ft.Icons.SETTINGS, label=translations[current_language]["Settings"])
-        ]
-        nav_bar.selected_index = selected_index
-
-    def change_language(selected):
+    def change_language(e):
         nonlocal current_language
-        current_language = selected
+        current_language = e.control.value
         update_texts()
 
-    def toggle_theme():
-        page.theme_mode = ft.ThemeMode.DARK if page.theme_mode == ft.ThemeMode.LIGHT else ft.ThemeMode.LIGHT
+    def toggle_theme(e):
+        page.theme_mode = (
+            ft.ThemeMode.DARK
+            if page.theme_mode == ft.ThemeMode.LIGHT
+            else ft.ThemeMode.LIGHT
+        )
         update_texts()
 
     def increase_text(e):
@@ -90,22 +80,8 @@ def main(page: ft.Page):
         text_size = max(8, text_size - 1)
         update_texts()
 
-    def update_texts():
-        label_language.value = translations[current_language]["Language"]
-        label_dark_mode.value = translations[current_language]["Dark Mode"]
-        label_text_size.value = translations[current_language]["Text Size"]
-
-        label_language.size = text_size
-        label_dark_mode.size = text_size
-        label_text_size.size = text_size
-
-        label_language.color = get_text_color()
-        label_dark_mode.color = get_text_color()
-        label_text_size.color = get_text_color()
-
-        settings_panel.bgcolor = get_bg_color()
-        update_nav_bar()
-        page.update()
+    lang_dropdown.on_change = change_language
+    theme_switch.on_change = toggle_theme
 
     btn_increase = ft.ElevatedButton("+", on_click=increase_text)
     btn_decrease = ft.ElevatedButton("-", on_click=decrease_text)
@@ -129,28 +105,44 @@ def main(page: ft.Page):
         bgcolor=get_bg_color(),
     )
 
-    def on_nav_change(e):
-        nonlocal selected_index
-        selected_index = e.control.selected_index
-        page.snack_bar = ft.SnackBar(ft.Text(f"You selected: {translations[current_language]['Settings' if selected_index == 0 else 'Users' if selected_index == 1 else 'Sensors' if selected_index == 2 else 'Data']}"))
-        page.snack_bar.open = True
-        page.update()
-
     nav_bar = ft.NavigationBar(
-        destinations=[],  # заполним позже
+        destinations=[
+            ft.NavigationBarDestination(icon=ft.Icons.DATA_OBJECT, label=""),
+            ft.NavigationBarDestination(icon=ft.Icons.SENSORS, label=""),
+            ft.NavigationBarDestination(icon=ft.Icons.PEOPLE, label=""),
+            ft.NavigationBarDestination(icon=ft.Icons.SETTINGS, label=""),
+        ],
         selected_index=selected_index,
         on_change=on_nav_change,
     )
 
-    update_nav_bar()
+    def update_texts():
+        label_language.value = translations[current_language]["Language"]
+        label_dark_mode.value = translations[current_language]["Dark Mode"]
+        label_text_size.value = translations[current_language]["Text Size"]
 
-    page.theme_mode = ft.ThemeMode.LIGHT
-    page.title = "Settings UI"
-    page.padding = 20
-    page.window_width = 420
-    page.window_height = 600
+        label_language.size = text_size
+        label_dark_mode.size = text_size
+        label_text_size.size = text_size
 
-    page.add(settings_panel)
-    page.add(nav_bar)
+        label_language.color = get_text_color()
+        label_dark_mode.color = get_text_color()
+        label_text_size.color = get_text_color()
 
-ft.app(target=main)
+        settings_panel.bgcolor = get_bg_color()
+
+        nav_bar.destinations[0].label = translations[current_language]["Data"]
+        nav_bar.destinations[1].label = translations[current_language]["Sensors"]
+        nav_bar.destinations[2].label = translations[current_language]["Users"]
+        nav_bar.destinations[3].label = translations[current_language]["Settings"]
+
+        page.update()
+
+    update_texts()
+
+    return ft.Column([
+        ft.Text(translations[current_language]["Settings"], size=24, weight=ft.FontWeight.BOLD),
+        ft.Divider(thickness=1),
+        settings_panel,
+        nav_bar
+    ])

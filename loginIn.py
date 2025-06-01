@@ -4,7 +4,11 @@ import database
 
 def login_view(page: ft.Page, on_login_success):
     database.create_users_table()
-    database.add_user("admin", "password123", role="admin")
+    if not database.verify_user("admin", "password123"):
+        try:
+            database.add_user("admin", "password123", role="admin")
+        except Exception as e:
+            print(f"Admin already exists or another error occurred: {e}")
 
     username = ft.TextField(label="Username", border_color="black", border_radius=6)
     password = ft.TextField(label="Password", password=True, can_reveal_password=True, border_color="black", border_radius=6)

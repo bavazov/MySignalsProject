@@ -30,8 +30,9 @@ def add_user(username, password, role="user"):
             (username, password, role)
         )
         conn.commit()
-    except sqlite3.IntegrityError:
-        print(f"User '{username}' already exists.")
+    except sqlite3.IntegrityError as e:
+        # Re-raise to allow UI to handle this error
+        raise e
     finally:
         conn.close()
 
@@ -56,7 +57,6 @@ def delete_user(user_id):
     cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
-
 
 def verify_user(username, password):
     conn = get_connection()

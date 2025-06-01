@@ -19,6 +19,13 @@ def users_view(page: ft.Page, on_nav_change):
         user_list.controls.clear()
         for user in get_all_users():
             user_id, username, role = user
+
+            def make_delete_handler(uid):
+                return lambda e: on_delete_user(uid)
+
+            def make_role_change_handler(uid):
+                return lambda e: on_role_change(e, uid)
+
             user_list.controls.append(
                 ft.Row([
                     ft.Text(username, width=150),
@@ -30,12 +37,12 @@ def users_view(page: ft.Page, on_nav_change):
                             ft.dropdown.Option("user"),
                             ft.dropdown.Option("guest"),
                         ],
-                        on_change=lambda e, uid=user_id: on_role_change(e, uid),
+                        on_change=make_role_change_handler(user_id),
                     ),
                     ft.IconButton(
                         icon=ft.Icons.DELETE,
                         tooltip="Delete User",
-                        on_click=lambda e, uid=user_id: on_delete_user(uid),
+                        on_click=make_delete_handler(user_id),
                     )
                 ])
             )
@@ -68,6 +75,10 @@ def users_view(page: ft.Page, on_nav_change):
             ]
         )
 
+        def close_dialog():
+            dialog.open = False
+            page.update()
+
         def add_user_action(e):
             username = username_input.value.strip()
             password = password_input.value.strip()
@@ -78,10 +89,14 @@ def users_view(page: ft.Page, on_nav_change):
                 dialog.update()
                 return
 
-            add_user(username, password, role)
-            refresh_user_list()
-            dialog.open = False
-            page.update()
+            try:
+                add_user(username, password, role)
+                refresh_user_list()
+                dialog.open = False
+                page.update()
+            except Exception as ex:
+                dialog.content = ft.Text(f"Error: {str(ex)}")
+                dialog.update()
 
         dialog = ft.AlertDialog(
             title=ft.Text("Add New User"),
@@ -96,10 +111,6 @@ def users_view(page: ft.Page, on_nav_change):
             ],
             on_dismiss=lambda e: close_dialog(),
         )
-
-        def close_dialog():
-            dialog.open = False
-            page.update()
 
         page.dialog = dialog
         dialog.open = True

@@ -3,6 +3,7 @@ from loginIn import login_view
 from users import users_view
 from sensors import sensors_view
 from settings import settings_view
+from data import data_view
 
 def main(page: ft.Page):
     page.title = "MySignals App"
@@ -11,7 +12,7 @@ def main(page: ft.Page):
     selected_index = 2  # Users tab default
 
     views = {
-        0: None,
+        0: data_view,
         1: sensors_view,
         2: users_view,
         3: settings_view,
